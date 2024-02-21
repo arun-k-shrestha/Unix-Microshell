@@ -16,6 +16,7 @@
 #include <time.h>
 #include <limits.h>
 #include <linux/stat.h>
+#include <linux/limits.h>
 
 //Prototypes
 static void exitProgram(char** args, int argcp);
@@ -33,38 +34,27 @@ static void touch(char** args, int argcp);
   */
 int builtIn(char** args, int argcp)
 {
-  //touch(args, argcp);
-  //my_stat(args,argcp);
 
-  //tail(args,argcp);
-  //pwd(args,argcp);
-  //cd(args,argcp);
-  //exitProgram(args,argcp);
-  // for (int i = 0; i < argcp; i++) {
-
-  //   if (strcmp(args[i], "exitProgram") == 0) {
-  //       //exitProgram(args, argcp);
-  //       return 1;
-  //   } else if (strcmp(args[i], "pwd") == 0) {
-  //       //pwd(args, argcp);
-  //       return 1;
-  //   } else if (strcmp(args[i], "cd") == 0) {
-  //       //cd(args, argcp);
-  //       return 1;
-  //   } else if (strcmp(args[i], "my_stat") == 0) {
-  //       //stat(args, argcp);
-  //       return 1;
-  //   } else if (strcmp(args[i], "tail") == 0) {
-  //       //tail(args, argcp);
-  //       return 1;
-  //   } else if (strcmp(args[i], "touch") == 0) {
-  //       //touch(args, argcp);
-  //       return 1;
-  //   }
-  // }
+  if (strcmp(args[0], "exitProgram") == 0) {
+      exitProgram(args, argcp);
+      return 1;
+  } else if (strcmp(args[0], "pwd") == 0) {
+      pwd(args, argcp);
+      return 1;
+  } else if (strcmp(args[0], "cd") == 0) {
+      cd(args, argcp);
+      return 1;
+  } else if (strcmp(args[0], "my_stat") == 0) {
+      my_stat(args, argcp);
+      return 1;
+  } else if (strcmp(args[0], "tail") == 0) {
+      tail(args, argcp);
+      return 1;
+  } else if (strcmp(args[0], "touch") == 0) {
+      touch(args, argcp);
+      return 1;
+  }
   return 0;
-
-  
 }
 
 // exit the shell with the value. If value is not given, exit with value 0
@@ -81,7 +71,7 @@ static void exitProgram(char** args, int argcp)
 
 static void pwd(char** args, int argpc)
 { 
-  if(strcmp(args[1],"pwd")==0){
+  if(strcmp(args[0],"pwd")==0){
   // Book Page 49  table 2.15 -> PATH_MAX => maximum-sized pathname
     char buf[PATH_MAX];
 
@@ -101,7 +91,7 @@ static void cd(char** args, int argcp)
 
 // if input is just "cd" or "cd ~"
 // do need to worry about "cd /"?
-  if(argcp <3){
+  if(argcp <=2){
     if(argcp==1 || strcmp(args[1], "~") == 0){
       // Book page 210, section 7.9. Environment Varibles. char *getenv(const char *name)
       const char *home = getenv("HOME");
@@ -118,17 +108,6 @@ static void cd(char** args, int argcp)
       }
     }
   }
- 
-
- //write your code
- // if nothing - cd  or tilde -> goes to home
- // cd .. one step back
- // if cd kaksl not found bash: cd: aks: No such file or directory
- // cd filename
-//  if(args)
-//   char buf[PATH_MAX];
-//   chdir()
-
 }
 
 
@@ -198,15 +177,15 @@ static void tail(char** args, int argcp){
     }else{
       // Book Page 152 Section 5.7 -> fgets
       printf("==> %s <==\n",args[i]);
-      int max_line = 256;
-      char buf[10][256]; // row and column
-
-      // index for buf
-      int j = 0;
-      while(fgets(buf[j],max_line,file_open)!= NULL){
+      int max_line = BUFSIZ;
+      char multiple_lines[10][BUFSIZ]; // row and column
+      char one_line[BUFSIZ];
+      int j =0;
+      // fgets -> (store, max character to store, file stream)
+      while(fgets(one_line,max_line,file_open)!= NULL){
+        strcpy(multiple_lines[j%10],one_line);
         j++;
       }
-
 
       // index to print lines. star_line is set up to print the last 10 lines
       int start_line = 0; 
@@ -216,7 +195,7 @@ static void tail(char** args, int argcp){
       } 
 
       for(start_line;start_line<j;start_line++){
-        printf("%s",buf[start_line]);
+        printf("%s",multiple_lines[start_line%10]);
       }
     }
 
@@ -269,8 +248,6 @@ static void touch(char** args, int argcp){
     struct timespec times[2]; 
     clock_gettime(CLOCK_REALTIME, &times[0]);
     clock_gettime(CLOCK_REALTIME, &times[1]);
-    // times[0] = touch_file.st_ctim;
-    // times[1] = touch_file.st_ctim;
 
     // From book Page 128;
     if(futimens(fd,times)<0){

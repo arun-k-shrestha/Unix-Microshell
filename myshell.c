@@ -16,7 +16,7 @@
 
 /* PROTOTYPES */
 
-void processline (char *line);
+void processline(char *line);
 ssize_t getinput(char** line, size_t* size);
 
 /* main
@@ -25,26 +25,29 @@ ssize_t getinput(char** line, size_t* size);
  */
 
 int main () {
+//  man 3 getline
 
- //write your code
- //use getinput and processline as appropriate
-  
-  // char *x[] ={"touch", "myshelsl.c"};
-  // int argcp =2;
+  // to store the size of an allocated memory
+  size_t size = 0;
+  // to store a length of an input 
+  ssize_t len;
+  // to store input from the user. Null -> not pointing to any valid memory address
+  char *line = NULL;
 
-  // char *x[] ={"my_stat", "hello"};
-  // int argcp =2;
-
-  // char *x[] ={"exitProgram"};
-  // int argcp =1;
-
-  // char *x[] ={"pwd", "hsello", "ts"};
-  // int argcp =3;
-
-  // char *x[] ={"cd", "hsello"};
-  // int argcp =3;
-
-  // builtIn(x,argcp);
+  // run the program forever until input command is exit or encounter any errors.
+  while (1) {
+  // prints -> %
+    printf("%% "); 
+    // get user input. line -> address to a pointer array. size -> stores buffer size
+    len = getinput(&line, &size); 
+    // getinput returns the number of characters read on suceess and -1 on failure
+    if (len < 0){ 
+        perror("Error");
+        continue; 
+    }
+    processline(line); 
+    //return 0;
+  }
   return EXIT_SUCCESS;
 }
 
@@ -61,11 +64,11 @@ int main () {
 * Hint: There is a standard i/o function that can make getinput easier than it sounds.
 */
 ssize_t getinput(char** line, size_t* size) {
-
-  ssize_t len = 0;
-  
-  
-  //write your code
+  size_t len = 0;
+  if ((len= getline(line, size,stdin)==-1)){
+    perror("Error");
+    exit(EXIT_FAILURE);
+  }
 
   return len;
 }
@@ -81,8 +84,16 @@ ssize_t getinput(char** line, size_t* size) {
 void processline (char *line)
 {
  /*check whether line is empty*/
-  //write your code
-    
+  while(*line !='\0'){
+    if(!isspace(*line)){
+      break;
+    }
+    line++;
+    if(*line=='\0'){
+      perror("Empty Space");
+      return;
+    }
+  }
   pid_t cpid;
   int   status;
   int argCount;
@@ -91,6 +102,27 @@ void processline (char *line)
   /*check whether arguments are builtin commands
    *if not builtin, fork to execute the command.
    */
-    //write your code
+  if(!builtIn(arguments,argCount)){
+    cpid = fork();
+    if(cpid==0){
+      if(execvp(arguments[0],arguments)==-1){
+        perror("Error");
+        exit(EXIT_FAILURE);
+      };
+
+    }else if(cpid>0){
+      pid_t id = wait(NULL);
+    }
+    else{
+      perror("fork error");
+      exit(EXIT_FAILURE);
+    }
+  }
+  // free the allocated space
+  for (int i = 0; i < argCount; i++) {
+    free(arguments[i]);
+  }
+  free(arguments);
+
 }
 
